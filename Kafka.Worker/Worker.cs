@@ -8,17 +8,12 @@ namespace Kafka.Worker
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly IRepository<VehicleLocation> _repository;
-        private readonly IConsumer<string, string> _consumer;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public Worker(ILogger<Worker> logger,
-            IRepository<VehicleLocation> repository,
-            IConsumer<string, string> consumer
-            )
+        public Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory)
         {
             _logger = logger;
-            _repository = repository;
-            _consumer = consumer;
+            _scopeFactory = scopeFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,31 +22,30 @@ namespace Kafka.Worker
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                try
+                using (var scope = _scopeFactory.CreateScope())
                 {
-                    var consumeResult = _consumer.Consume(stoppingToken);
-                    if (consumeResult == null) continue;
+                    var repository = scope.ServiceProvider.GetRequiredService<IRepository<VehicleLocation>>();
+                    var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<string, string>>();
 
-                    _logger.LogInformation("Received message at: {time}", DateTimeOffset.Now);
+                    try
+                    {
+                        var consumeResult = consumer.Consume(stoppingToken);
+                        if (consumeResult == null) continue;
 
-                    var vehicleLocation = JsonSerializer.Deserialize<VehicleLocation>(consumeResult.Message.Value);
-                    await _repository.AddAsync(vehicleLocation);
-                    await _repository.SaveChangesAsync();
+                        var vehicleLocation = JsonSerializer.Deserialize<VehicleLocation>(consumeResult.Message.Value);
+                        await repository.AddAsync(vehicleLocation);
+                        await repository.SaveChangesAsync();
 
-                    _logger.LogInformation("Processed vehicle {VehicleId} location", vehicleLocation.VehicleId);
+                        _logger.LogInformation("Processed vehicle {VehicleId}", vehicleLocation.VehicleId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error processing message");
+                    }
                 }
-                catch (OperationCanceledException)
-                {
-                    _logger.LogInformation("Worker cancellation requested");
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error processing message");
-                }
+
+                await Task.Delay(1000, stoppingToken);
             }
-
-            _consumer.Close();
         }
     }
 }
