@@ -1,0 +1,6 @@
+@SimulatedSamsaraAPI_HostAddress = http://localhost:5072
+
+GET {{SimulatedSamsaraAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
