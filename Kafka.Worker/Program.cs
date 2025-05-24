@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace Kafka.Worker
 {
@@ -67,9 +68,10 @@ namespace Kafka.Worker
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    // Configuration
+                    // 1. Register Infrastructure (DbContext, Repositories)
                     services.AddInfrastructure(hostContext.Configuration);
 
+                    // 2. Configure Kafka Consumer
                     // Kafka Consumer (Transient - new instance each time)
                     services.AddTransient<IConsumer<string, string>>(sp =>
                     {
@@ -85,10 +87,12 @@ namespace Kafka.Worker
                         return new ConsumerBuilder<string, string>(config).Build();
                     });
 
+                    // 3. Register KafkaTopicCreator (Singleton)
                     // Kafka Topic Creator (Singleton - can be reused)
                     services.AddSingleton<KafkaTopicCreator>(sp =>
                         new KafkaTopicCreator(hostContext.Configuration["Kafka:BootstrapServers"]));
 
+                    // 4.Register Worker as a Scoped Background Service
                     // Worker Service (Scoped)
                     services.AddScoped<IHostedService, Worker>();
 
