@@ -9,7 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.10.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+    <ProjectReference Include="..\Infrastructure.DependencyInjection\Infrastructure.DependencyInjection.csproj" />
+    <ProjectReference Include="..\Infrastructure.Persistence\Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\Kafka.Infrastructure\Kafka.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
