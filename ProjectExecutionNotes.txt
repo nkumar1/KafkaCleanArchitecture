@@ -89,6 +89,17 @@ docker exec kafka_local kafka-topics --list --bootstrap-server localhost:9092
 docker exec -it kafka_local kafka-console-consumer --bootstrap-server localhost:9092 --topic vehicle-locations --from-beginning
 
 
+# Delete Kafaka topic manually
+=======================================
+docker exec -it kafka_local kafka-topics --bootstrap-server localhost:9092 --delete --topic vehicle-locations
+
+Note: Kafka doesn't support deleting individual messages from a topic directly
+
+
 Question:
 1. lifetime in the DI container vs scope usage within a background worker.
 	All BackgroundService or IHostedService instances must be singleton.
+
+2. AutoOffsetReset.Earliest and AutoOffsetReset.Latest : Whats the difference?
+
+3. 

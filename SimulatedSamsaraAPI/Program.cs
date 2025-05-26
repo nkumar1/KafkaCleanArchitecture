@@ -35,9 +35,6 @@ builder.Services.AddSingleton<IProducer<string, string>>(_ =>
         CompressionType = CompressionType.Snappy // Use Snappy compression for better performance
     }).Build());
 
-
-// Kafka AdminClient (Singleton)
-
 //Manages Kafka topics/metadata
 //Separate from producer for clean separation of concerns
 

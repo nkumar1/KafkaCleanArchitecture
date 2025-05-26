@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Domain.Entities;
 using Domain.Interfaces;
 using System.Text.Json;
@@ -41,6 +41,10 @@ namespace Kafka.Worker
                         var vehicleLocation = JsonSerializer.Deserialize<VehicleLocation>(consumeResult.Message.Value);
                         await repository.AddAsync(vehicleLocation);
                         await repository.SaveChangesAsync();
+
+                        // ✅ Commit offset manually, Avoid triggering re-consumption
+                        consumer.StoreOffset(consumeResult);
+                        consumer.Commit(consumeResult);
 
                         _logger.LogInformation("Processed vehicle {VehicleId}", vehicleLocation.VehicleId);
                     }

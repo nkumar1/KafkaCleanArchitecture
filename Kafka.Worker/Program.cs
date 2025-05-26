@@ -80,8 +80,9 @@ namespace Kafka.Worker
                         var config = new ConsumerConfig
                         {
                             BootstrapServers = hostContext.Configuration["Kafka:BootstrapServers"],
-                            GroupId = hostContext.Configuration["Kafka:GroupId"],
-                            AutoOffsetReset = AutoOffsetReset.Earliest,
+                            GroupId = hostContext.Configuration["Kafka:GroupId"], //GroupId is used only in Kafka consumers — not in producers.
+                            //The consumer only reads new messages
+                            AutoOffsetReset = AutoOffsetReset.Latest, //.Earliest,
                             EnableAutoCommit = false,
                             EnableAutoOffsetStore = false,
                             AllowAutoCreateTopics = true // Important for local development
