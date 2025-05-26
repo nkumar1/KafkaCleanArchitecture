@@ -60,7 +60,7 @@ Update-Database -StartupProject Kafka.Worker -Project Infrastructure.Persistence
 
 # List topic details (show partitions)
 ==============================================
-docker exec -it kafka kafka-topics \
+docker exec -it kafka_local kafka-topics \
   --describe \
   --bootstrap-server localhost:9092 \
   --topic vehicle-locations
@@ -74,7 +74,7 @@ docker exec -it kafka kafka-consumer-groups \
 
 # Monitor Group Activity
 ====================================
-docker exec -it kafka kafka-consumer-groups \
+docker exec -it kafka_local kafka-consumer-groups \
   --bootstrap-server localhost:9092 \
   --group vehicle-api-group \
   --describe
@@ -84,5 +84,11 @@ docker exec -it kafka kafka-consumer-groups \
 ==========================
 docker exec kafka_local kafka-topics --list --bootstrap-server localhost:9092
 
+# Manually inspect whether the topic has the message
+=====================================================
+docker exec -it kafka_local kafka-console-consumer --bootstrap-server localhost:9092 --topic vehicle-locations --from-beginning
 
 
+Question:
+1. lifetime in the DI container vs scope usage within a background worker.
+	All BackgroundService or IHostedService instances must be singleton.

@@ -9,26 +9,32 @@ namespace Kafka.Worker
     {
         private readonly ILogger<Worker> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IConfiguration _configuration;
 
-        public Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory)
+        public Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory, IConfiguration configuration)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
+            _configuration = configuration;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Worker started at: {time}", DateTimeOffset.Now);
+            _logger.LogInformation("Kafka Worker started at: {time}", DateTimeOffset.Now);
+            var topicName = _configuration["Kafka:TopicName"];
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var repository = scope.ServiceProvider.GetRequiredService<IRepository<VehicleLocation>>();
+
                     var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<string, string>>();
 
                     try
                     {
+                        consumer.Subscribe(topicName); //Subscribe Topic
+
                         var consumeResult = consumer.Consume(stoppingToken);
                         if (consumeResult == null) continue;
 
