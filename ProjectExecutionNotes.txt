@@ -80,4 +80,9 @@ docker exec -it kafka kafka-consumer-groups \
   --describe
 
 
- 
+# List all the topics
+==========================
+docker exec kafka_local kafka-topics --list --bootstrap-server localhost:9092
+
+
+

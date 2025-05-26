@@ -14,7 +14,7 @@ namespace SimulatedSamsaraAPI.Controllers
 
         public VehiclesController(ILogger<VehiclesController> logger)
         {
-            var config = new ProducerConfig { BootstrapServers = "kafka_local:9092" };
+            var config = new ProducerConfig { BootstrapServers = "localhost:9092" };
             _producer = new ProducerBuilder<string, string>(config).Build();
             _logger = logger;
         }

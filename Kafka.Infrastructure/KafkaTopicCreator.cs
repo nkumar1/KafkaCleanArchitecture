@@ -11,7 +11,7 @@ namespace Kafka.Infrastructure
         {
             _bootstrapServers = bootstrapServers;
         }
-
+        
         public async Task CreateTopicIfNotExistsAsync(string topicName, int numPartitions = 3, short replicationFactor = 1)
         {
             using var adminClient = new AdminClientBuilder(new AdminClientConfig

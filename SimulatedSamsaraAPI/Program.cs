@@ -15,7 +15,7 @@ builder.Configuration
 .AddEnvironmentVariables();
 
 //ToDo: Update kafka bootstrap servers from environment variables or configuration
-var kafkaBootstrapServers = builder.Configuration["Kafka:BootstrapServers"] ?? "kafka_local:9092";
+var kafkaBootstrapServers = builder.Configuration["Kafka:BootstrapServers"] ?? "localhost:9092";
 
 // ======== Services ========
 builder.Services.AddControllers();
@@ -104,7 +104,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         // Verify Kafka connection
-        var metadata = adminClient.GetMetadata(TimeSpan.FromSeconds(5));
+        var metadata = adminClient.GetMetadata(TimeSpan.FromSeconds(10));
         logger.LogInformation("Connected to Kafka brokers: {Brokers}",
             string.Join(", ", metadata.Brokers.Select(b => $"{b.Host}:{b.Port}")));
 
@@ -112,14 +112,21 @@ using (var scope = app.Services.CreateScope())
         var topicName = "vehicle-locations";
         if (!metadata.Topics.Exists(t => t.Topic == topicName))
         {
-            await adminClient.CreateTopicsAsync(new[] {
+            try
+            {
+                await adminClient.CreateTopicsAsync(new[] {
                 new TopicSpecification {
                     Name = topicName,
                     NumPartitions = 3,
                     ReplicationFactor = 1
                 }
             });
-            logger.LogInformation("Created Kafka topic: {Topic}", topicName);
+                logger.LogInformation("Created Kafka topic: {Topic}", topicName);
+            }
+            catch (CreateTopicsException ex) when (ex.Results.Any(r => r.Error.Code == ErrorCode.TopicAlreadyExists))
+            {
+                logger.LogInformation("Topic '{Topic}' already exists.", topicName);
+            }
         }
     }
     catch (Exception ex)

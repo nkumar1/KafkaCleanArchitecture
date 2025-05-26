@@ -18,24 +18,26 @@ namespace Kafka.Worker
             var host = CreateHostBuilder(args).Build();
 
             // Initialize database
-            using (var scope = host.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                var logger = services.GetRequiredService<ILogger<Program>>();
+            //Commenting code since DB migration is already completed.
 
-                try
-                {
-                    var context = services.GetRequiredService<AppDbContext>();
-                    logger.LogInformation("Applying database migrations...");
-                    await context.Database.MigrateAsync();
-                    logger.LogInformation("Migrations applied successfully");
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "An error occurred while migrating the database");
-                    throw; // Rethrow to fail fast if migrations fail
-                }
-            }
+            //using (var scope = host.Services.CreateScope())
+            //{
+            //    var services = scope.ServiceProvider;
+            //    var logger = services.GetRequiredService<ILogger<Program>>();
+
+            //    try
+            //    {
+            //        var context = services.GetRequiredService<AppDbContext>();
+            //        logger.LogInformation("Applying database migrations...");
+            //        await context.Database.MigrateAsync();
+            //        logger.LogInformation("Migrations applied successfully");
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        logger.LogError(ex, "An error occurred while migrating the database");
+            //        throw; // Rethrow to fail fast if migrations fail
+            //    }
+            //}
 
             // Initialize Kafka topic
             using (var scope = host.Services.CreateScope())
@@ -47,7 +49,7 @@ namespace Kafka.Worker
                 {
                     //IServiceProvider : This is used to resolve services from the DI container
                     //GetRequiredService: This method retrieves a service of the specified type from the DI container,
-                                         //throwing an exception if the service is not registered.
+                    //throwing an exception if the service is not registered.
 
                     var topicCreator = services.GetRequiredService<KafkaTopicCreator>();
                     logger.LogInformation("Creating Kafka topic if not exists...");
@@ -92,9 +94,10 @@ namespace Kafka.Worker
                     services.AddSingleton<KafkaTopicCreator>(sp =>
                         new KafkaTopicCreator(hostContext.Configuration["Kafka:BootstrapServers"]));
 
-                    // 4.Register Worker as a Scoped Background Service
-                    // Worker Service (Scoped)
-                    services.AddScoped<IHostedService, Worker>();
+                    // 4.Register Worker as a Singleton Background Service
+                    //All BackgroundService or IHostedService instances must be singleton.
+
+                    services.AddSingleton<IHostedService, Worker>();
 
                     // Add health checks if needed
                     services.AddHealthChecks()
