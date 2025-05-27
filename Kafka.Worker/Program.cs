@@ -89,7 +89,7 @@ namespace Kafka.Worker
                             BootstrapServers = options.BootstrapServers,
                             GroupId = options.GroupId, //GroupId is used only in Kafka consumers — not in producers.
                             //The consumer only reads new messages
-                            AutoOffsetReset = AutoOffsetReset.Latest, //.Earliest,
+                            AutoOffsetReset = AutoOffsetReset.Latest, //.Earliest, //.Latest
                             EnableAutoCommit = false, //Manually commit offsets (after processing), doing after saving data into DB.
                             EnableAutoOffsetStore = false,
                             AllowAutoCreateTopics = options.AllowAutoCreateTopics, // set to true: Important for local development not for production deployment.

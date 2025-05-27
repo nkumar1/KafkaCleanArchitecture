@@ -23,44 +23,94 @@ namespace Kafka.Worker
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Kafka Worker started at: {time}", DateTimeOffset.Now);
-            var topicName = _kafkaOptions.TopicName; //_configuration["Kafka:TopicName"];
+            var topicName = _kafkaOptions.TopicName;
 
-            while (!stoppingToken.IsCancellationRequested)
+            using var scope = _scopeFactory.CreateScope();
+            var repository = scope.ServiceProvider.GetRequiredService<IRepository<VehicleLocation>>();
+
+            //Reuse the same consumer for the whole service lifetime
+            var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<string, string>>();
+            consumer.Subscribe(topicName); // ✅ Subscribe ONCE, outside loop
+
+            try
             {
-                using (var scope = _scopeFactory.CreateScope())
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    var repository = scope.ServiceProvider.GetRequiredService<IRepository<VehicleLocation>>();
-
-                    var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<string, string>>();
-
                     try
                     {
-                        consumer.Subscribe(topicName); //Subscribe Topic
-
                         var consumeResult = consumer.Consume(stoppingToken);
-                        if (consumeResult == null) continue;
-
-                        if (consumeResult.Message == null) continue;
-
+                        if (consumeResult == null || consumeResult.Message == null) continue;
 
                         var vehicleLocation = JsonSerializer.Deserialize<VehicleLocation>(consumeResult.Message.Value);
                         await repository.AddAsync(vehicleLocation);
                         await repository.SaveChangesAsync();
 
-                        // ✅ Commit offset manually, Avoid triggering re-consumption
                         consumer.StoreOffset(consumeResult);
                         consumer.Commit(consumeResult);
 
                         _logger.LogInformation("Processed vehicle {VehicleId}", vehicleLocation.VehicleId);
                     }
+                    catch (ConsumeException cex)
+                    {
+                        _logger.LogError(cex, "Kafka consume error");
+                    }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error processing message");
                     }
-                }
 
-                await Task.Delay(1000, stoppingToken);
+                    await Task.Delay(200, stoppingToken); // Reduce tight loop CPU pressure
+                }
+            }
+            finally
+            {
+                consumer.Close(); // Important for clean shutdown and offset commit
             }
         }
+
+
+        //protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        //{
+        //    _logger.LogInformation("Kafka Worker started at: {time}", DateTimeOffset.Now);
+        //    var topicName = _kafkaOptions.TopicName; //_configuration["Kafka:TopicName"];
+
+        //    while (!stoppingToken.IsCancellationRequested)
+        //    {
+        //        using (var scope = _scopeFactory.CreateScope())
+        //        {
+        //            var repository = scope.ServiceProvider.GetRequiredService<IRepository<VehicleLocation>>();
+
+        //            var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<string, string>>();
+
+        //            try
+        //            {
+        //                consumer.Subscribe(topicName); //Subscribe Topic
+
+        //                var consumeResult = consumer.Consume(stoppingToken);
+        //                if (consumeResult == null) continue;
+
+        //                if (consumeResult.Message == null) continue;
+
+
+        //                var vehicleLocation = JsonSerializer.Deserialize<VehicleLocation>(consumeResult.Message.Value);
+        //                await repository.AddAsync(vehicleLocation);
+        //                await repository.SaveChangesAsync();
+
+        //                // ✅ Commit offset manually, Avoid triggering re-consumption
+        //                consumer.StoreOffset(consumeResult);
+        //                consumer.Commit(consumeResult);
+
+        //                _logger.LogInformation("Processed vehicle {VehicleId}", vehicleLocation.VehicleId);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                _logger.LogError(ex, "Error processing message");
+        //            }
+        //        }
+
+        //        await Task.Delay(1000, stoppingToken);
+        //    }
+        //}
+
     }
 }
