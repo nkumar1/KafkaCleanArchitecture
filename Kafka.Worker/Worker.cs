@@ -40,6 +40,9 @@ namespace Kafka.Worker
                         var consumeResult = consumer.Consume(stoppingToken);
                         if (consumeResult == null) continue;
 
+                        if (consumeResult.Message == null) continue;
+
+
                         var vehicleLocation = JsonSerializer.Deserialize<VehicleLocation>(consumeResult.Message.Value);
                         await repository.AddAsync(vehicleLocation);
                         await repository.SaveChangesAsync();
