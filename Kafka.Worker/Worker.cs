@@ -30,7 +30,7 @@ namespace Kafka.Worker
 
             //Reuse the same consumer for the whole service lifetime
             var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<string, string>>();
-            consumer.Subscribe(topicName); // ✅ Subscribe ONCE, outside loop
+            consumer.Subscribe(topicName); //Subscribe ONCE, outside loop
 
             try
             {
@@ -42,8 +42,25 @@ namespace Kafka.Worker
                         if (consumeResult == null || consumeResult.Message == null) continue;
 
                         var vehicleLocation = JsonSerializer.Deserialize<VehicleLocation>(consumeResult.Message.Value);
-                        await repository.AddAsync(vehicleLocation);
-                        await repository.SaveChangesAsync();
+
+                        _logger.LogInformation("Received message from Partition: {Partition}, Offset: {Offset}",
+                           consumeResult.Partition.Value,
+                           consumeResult.Offset.Value);
+
+                        // Check if record already exists to prevent duplicate insert
+                        var exists = await repository.ExistsAsync(vehicleLocation.VehicleId, vehicleLocation.Timestamp);
+
+                        if (!exists)
+                        {
+                            await repository.AddAsync(vehicleLocation);
+                            await repository.SaveChangesAsync();
+
+                            _logger.LogInformation("Inserted vehicle {VehicleId} at {Timestamp}", vehicleLocation.VehicleId, vehicleLocation.Timestamp);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Skipped duplicate vehicle {VehicleId} at {Timestamp}", vehicleLocation.VehicleId, vehicleLocation.Timestamp);
+                        }
 
                         consumer.StoreOffset(consumeResult);
                         consumer.Commit(consumeResult);

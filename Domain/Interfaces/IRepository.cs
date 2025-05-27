@@ -10,5 +10,7 @@ namespace Domain.Interfaces
     {
         Task AddAsync(T entity);
         Task SaveChangesAsync();
+        Task<bool> ExistsAsync(string vehicleId, DateTime timestamp);
+
     }
 }

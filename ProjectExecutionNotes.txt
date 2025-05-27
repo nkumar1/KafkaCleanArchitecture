@@ -78,6 +78,12 @@ docker exec -it kafka_local kafka-consumer-groups \
   --bootstrap-server localhost:9092 \
   --group vehicle-api-group \
   --describe
+  
+
+# Describe Kafka Topic
+============================
+
+docker exec kafka_local kafka-topics --describe --bootstrap-server localhost:9092 --topic vehicle-locations
 
 
 # List all the topics
@@ -94,6 +100,27 @@ docker exec -it kafka_local kafka-console-consumer --bootstrap-server localhost:
 docker exec -it kafka_local kafka-topics --bootstrap-server localhost:9092 --delete --topic vehicle-locations
 
 Note: Kafka doesn't support deleting individual messages from a topic directly
+
+
+Run worker Project 
+======================
+
+MySolution/
+│
+├── kafka.Worker/
+│   └── kafka.Worker.csproj
+│
+├── kafka.Producer/
+│   └── kafka.Producer.csproj
+│
+└── MySolution.sln
+
+Navigate to the MySolution folder (the one containing the .sln file), then run:
+
+=> dotnet run --project kafka.Worker
+
+
+=============================================================================================
 
 
 Question:
