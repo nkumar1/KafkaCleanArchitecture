@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using static System.Formats.Asn1.AsnWriter;
 
 namespace Kafka.Worker
@@ -70,27 +71,36 @@ namespace Kafka.Worker
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    // 1. Register Infrastructure (DbContext, Repositories)
+                    // 1. Binds section "Kafka" to KafkaOptions and registers it for DI
+                    services.Configure<KafkaOptions>(
+                        hostContext.Configuration.GetSection("Kafka"));
+
+                    // 2. Register Infrastructure (DbContext, Repositories)
                     services.AddInfrastructure(hostContext.Configuration);
 
-                    // 2. Configure Kafka Consumer
+                    // 3. Configure Kafka Consumer
                     // Kafka Consumer (Transient - new instance each time)
                     services.AddTransient<IConsumer<string, string>>(sp =>
                     {
+                        var options = sp.GetRequiredService<IOptions<KafkaOptions>>().Value;
+
                         var config = new ConsumerConfig
                         {
-                            BootstrapServers = hostContext.Configuration["Kafka:BootstrapServers"],
-                            GroupId = hostContext.Configuration["Kafka:GroupId"], //GroupId is used only in Kafka consumers — not in producers.
+                            BootstrapServers = options.BootstrapServers,
+                            GroupId = options.GroupId, //GroupId is used only in Kafka consumers — not in producers.
                             //The consumer only reads new messages
                             AutoOffsetReset = AutoOffsetReset.Latest, //.Earliest,
-                            EnableAutoCommit = false,
+                            EnableAutoCommit = false, //Manually commit offsets (after processing), doing after saving data into DB.
                             EnableAutoOffsetStore = false,
-                            AllowAutoCreateTopics = true // Important for local development
+                            AllowAutoCreateTopics = options.AllowAutoCreateTopics, // set to true: Important for local development not for production deployment.
+                            SessionTimeoutMs = 10000,  // Time to detect dead consumers
+                            MaxPollIntervalMs = 300000, // Adjust if processing takes longer
+                            EnablePartitionEof = true // For explicit EOF handling
                         };
                         return new ConsumerBuilder<string, string>(config).Build();
                     });
 
-                    // 3. Register KafkaTopicCreator (Singleton)
+                    // 4. Register KafkaTopicCreator (Singleton)
                     // Kafka Topic Creator (Singleton - can be reused)
                     services.AddSingleton<KafkaTopicCreator>(sp =>
                         new KafkaTopicCreator(hostContext.Configuration["Kafka:BootstrapServers"]));

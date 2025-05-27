@@ -1,6 +1,8 @@
 ﻿using Confluent.Kafka;
 using Domain.Entities;
 using Domain.Interfaces;
+using Kafka.Infrastructure;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Kafka.Worker
@@ -9,19 +11,19 @@ namespace Kafka.Worker
     {
         private readonly ILogger<Worker> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IConfiguration _configuration;
+        private readonly KafkaOptions _kafkaOptions;
 
-        public Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory, IConfiguration configuration)
+        public Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory, IOptions<KafkaOptions> kafkaOptions)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
-            _configuration = configuration;
+            _kafkaOptions = kafkaOptions.Value;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Kafka Worker started at: {time}", DateTimeOffset.Now);
-            var topicName = _configuration["Kafka:TopicName"];
+            var topicName = _kafkaOptions.TopicName; //_configuration["Kafka:TopicName"];
 
             while (!stoppingToken.IsCancellationRequested)
             {
