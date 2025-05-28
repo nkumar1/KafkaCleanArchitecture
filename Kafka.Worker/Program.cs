@@ -97,6 +97,15 @@ namespace Kafka.Worker
                             MaxPollIntervalMs = 300000, // Adjust if processing takes longer
                             EnablePartitionEof = true // For explicit EOF handling
                         };
+
+                        //Kafka Consumer expects Kafka messages with string keys and string values.
+
+                        //“Hey Kafka, I expect the message Key to be a string, and the Value to also be a string.”
+                        //The consumer will deserialize the key and value of the Kafka message as strings.
+
+                        //In  API (Kafka producer), message format is explicitly set to <string, string>. Key is "VehicleId" and Value is
+                        //JSON created from VehicleLocation object.
+
                         return new ConsumerBuilder<string, string>(config).Build();
                     });
 
