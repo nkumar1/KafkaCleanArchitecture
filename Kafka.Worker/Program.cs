@@ -82,6 +82,7 @@ namespace Kafka.Worker
                     // Kafka Consumer (Transient - new instance each time)
                     services.AddTransient<IConsumer<string, string>>(sp =>
                     {
+                        // Strongly typed config with IOptions<T>
                         var options = sp.GetRequiredService<IOptions<KafkaOptions>>().Value;
 
                         var config = new ConsumerConfig
