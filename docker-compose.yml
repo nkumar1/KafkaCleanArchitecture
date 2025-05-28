@@ -1,0 +1,53 @@
+﻿services:
+  zookeeper_local:  # this now matches depends_on
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper_local
+    ports:
+      - "22181:2181" # External 22181 maps to internal 2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka_local:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka_local
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper_local
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper_local:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092  # 👈 So your .NET app can connect
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  # Test with SQL Server, create connector.
+
+  # kafka-connect:
+  #   image: confluentinc/cp-kafka-connect:7.5.0
+  #   container_name: kafka_connect
+  #   ports:
+  #     - "8083:8083"
+  #   depends_on:
+  #     - kafka_local
+  #   volumes:
+  #       - ./orders.json:/data/orders.json
+  #       - ./file-source.json:/connectors/file-source.json
+
+  #   environment:
+  #     CONNECT_BOOTSTRAP_SERVERS: kafka_local:9092
+  #     CONNECT_REST_PORT: 8083
+  #     CONNECT_REST_ADVERTISED_HOST_NAME: localhost
+  #     CONNECT_GROUP_ID: "connect-cluster"
+  #     CONNECT_CONFIG_STORAGE_TOPIC: "_connect-configs"
+  #     CONNECT_OFFSET_STORAGE_TOPIC: "_connect-offsets"
+  #     CONNECT_STATUS_STORAGE_TOPIC: "_connect-status"
+  #     CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+  #     CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+  #     CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+  #     CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+  #     CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+  #     CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+  #     CONNECT_PLUGIN_PATH: "/usr/share/java"

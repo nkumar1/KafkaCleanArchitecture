@@ -1,14 +1,19 @@
+#About Project
+
+
+
+
 KafkaCleanArchitecture/
 ├── docker-compose.yml
 ├── src/
-│   ├── Domain/                                  # Class Library (.NET Standard 2.1 or .NET 6)
+│   ├── Domain/                                  # Class Library (.NET Standard 2.1 or .NET 8)
 │   │   ├── Entities/
 │   │   │   └── VehicleLocation.cs
 │   │   ├── Interfaces/
 │   │   │   └── IRepository.cs
 │   │   └── Domain.csproj
 │   │
-│   ├── Application/                             # Class Library (.NET Standard 2.1 or .NET 6)
+│   ├── Application/                             # Class Library (.NET Standard 2.1 or .NET 8)
 │   │   ├── Services/                            # (Optional - for future business logic)
 │   │   └── Application.csproj
 │   │
@@ -28,18 +33,18 @@ KafkaCleanArchitecture/
 │   │   ├── DependencyInjection.cs
 │   │   └── Infrastructure.DependencyInjection.csproj
 │   │
-│   ├── Kafka.Infrastructure/                    # Class Library (.NET 6)
+│   ├── Kafka.Infrastructure/                    # Class Library (.NET 8)
 │   │   ├── KafkaTopicCreator.cs
 │   │   └── Kafka.Infrastructure.csproj
 │   │
-│   ├── Kafka.Worker/                            # Worker Service (.NET 6)
+│   ├── Kafka.Worker/                            # Worker Service (.NET 8)
 │   │   ├── Worker.cs
 │   │   ├── Program.cs
 │   │   ├── appsettings.json
 │   │   ├── Dockerfile
 │   │   └── Kafka.Worker.csproj
 │   │
-│   └── SimulatedSamsaraAPI/                     # ASP.NET Core Web API (.NET 6)
+│   └── SimulatedSamsaraAPI/                     # ASP.NET Core Web API (.NET 8)
 │       ├── Controllers/
 │       │   └── VehiclesController.cs
 │       ├── appsettings.json
@@ -48,9 +53,19 @@ KafkaCleanArchitecture/
 │       └── SimulatedSamsaraAPI.csproj
 │
 └── tests/                                       # (Future test projects)
-    ├── UnitTests/                               # xUnit/MSTest Project (.NET 6)
-    └── IntegrationTests/                        # xUnit/MSTest Project (.NET 6)
+    ├── UnitTests/                               # xUnit/MSTest Project (.NET 8)
+    └── IntegrationTests/                        # xUnit/MSTest Project (.NET 8)
 
+
+-- Create SQL Table
+===============================
+CREATE TABLE VehicleLocations (
+    Id INT IDENTITY PRIMARY KEY,
+    VehicleId VARCHAR(50),
+    Latitude FLOAT,
+    Longitude FLOAT,
+    TrackingTime DATETIME
+);
 
 
 DB Migration:
@@ -82,7 +97,6 @@ docker exec -it kafka_local kafka-consumer-groups \
 
 # Describe Kafka Topic
 ============================
-
 docker exec kafka_local kafka-topics --describe --bootstrap-server localhost:9092 --topic vehicle-locations
 
 
@@ -105,30 +119,22 @@ Note: Kafka doesn't support deleting individual messages from a topic directly
 Run worker Project 
 ======================
 
-MySolution/
+KafkaCleanArchitecture/
 │
-├── kafka.Worker/
-│   └── kafka.Worker.csproj
+├── Kafka.Worker/
+│   └── Kafka.Worker.csproj
 │
-├── kafka.Producer/
-│   └── kafka.Producer.csproj
+├── SimulatedSamsaraAPI/
+│   └── SimulatedSamsaraAPI.csproj
 │
-└── MySolution.sln
+└── KafkaCleanArchitecture.sln
 
-Navigate to the MySolution folder (the one containing the .sln file), then run:
+Navigate to the KafkaCleanArchitecture folder (the one containing the .sln file), then run:
 
-=> dotnet run --project kafka.Worker
+=> dotnet run --project Kafka.Worker
 
 
 =============================================================================================
 
-
-Question:
-1. lifetime in the DI container vs scope usage within a background worker.
-	All BackgroundService or IHostedService instances must be singleton.
-
-2. AutoOffsetReset.Earliest and AutoOffsetReset.Latest : Whats the difference?
-
-3. If the consumer group has no committed offset, it will start reading only new messages (those produced after the consumer starts). ??
-
-4. 
+Important Notes
+======================
