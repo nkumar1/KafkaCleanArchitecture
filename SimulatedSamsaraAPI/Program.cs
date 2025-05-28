@@ -70,7 +70,7 @@ app.MapControllers();
 // Health Check Endpoints
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
-    Predicate = _ => true,
+    Predicate = _ => true, //Includes all registered health checks (In this case its Kafka & SQL, Line number 52-54)
     ResponseWriter = async (context, report) =>
     {
         context.Response.ContentType = "application/json";
@@ -89,7 +89,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
-    Predicate = _ => false // Simple liveness check
+    Predicate = _ => false // # Simple liveness check # No health checks run # Just returns 200 OK if the app is running
 });
 
 // ======== Kafka Initialization ========

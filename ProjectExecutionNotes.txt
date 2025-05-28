@@ -134,6 +134,16 @@ Navigate to the KafkaCleanArchitecture folder (the one containing the .sln file)
 => dotnet run --project Kafka.Worker
 
 
+# Health Check
+===================
+
+# Check Readiness
+curl http://localhost:5072/health/ready -k
+
+#Check Liveness
+curl http://localhost:5072/health/live -k
+
+
 =============================================================================================
 
 Important Notes
