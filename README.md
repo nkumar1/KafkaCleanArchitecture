@@ -131,4 +131,16 @@ Code
 ├── Infrastructure.Persistence/   # EF Core DbContext, Repositories
 ├── Kafka.Infrastructure/         # Kafka topic management
 📨 Contributing
+
+# Health Check
+===================
+## Check Readiness
+```sh
+curl http://localhost:5072/health/ready -k
+```
+
+## Check Liveness
+```sh
+curl http://localhost:5072/health/live -k
+```
 PRs and suggestions are welcome. Please open an issue first for significant changes.
